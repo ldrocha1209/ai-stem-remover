@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="Free AI Vocal Stem Remover – Isolate vocals, drums, bass, or instruments from any song in seconds."
+    />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:title" content="Free AI Stem Remover" />
+    <meta
+      property="og:description"
+      content="Isolate vocals, drums, bass, or instruments with AI – free and fast."
+    />
+    <meta property="og:image" content="/static/preview.jpg" />
+    <meta property="og:url" content="https://yourdomain.com" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Free AI Stem Remover" />
+    <meta
+      name="twitter:description"
+      content="Isolate vocals, drums, bass, or instruments with AI – free and fast."
+    />
+    <meta name="twitter:image" content="/static/preview.jpg" />
+    <title>Free AI Stem Remover | Isolate Vocals, Drums, Bass</title>
+    <link rel="stylesheet" href="/static/style.css?v=5" />
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon" />
+    <script src="/static/script.js" defer></script>
+  </head>
+  <body>
+    <noscript>
+      <div class="noscript-warning">
+        ⚠️ JavaScript is required to use this tool. Please enable JavaScript in your browser.
+      </div>
+    </noscript>
+
+    <div class="container" style="position: relative;">
+      <a
+        href="/logout"
+        style="position:absolute;top:1rem;right:1rem;text-decoration:none;color:#fff;font-size:0.9rem;"
+        >Log Out</a
+      >
+
+      <header style="text-align: center; padding-top: 2rem; padding-bottom: 1rem;">
+        <h1 class="gradient-header">🎵 AI Stem Remover</h1>
+        <p>Isolate vocals, drums, bass, or instruments from your music using AI – fast &amp; free.</p>
+      </header>
+
+      <main>
+        <section id="uploadSection" aria-labelledby="formTitle">
+          <h2 id="formTitle">Upload your track</h2>
+          <form id="stemForm" enctype="multipart/form-data">
+            <div class="form-group">
+              <label for="file">Select audio file:</label>
+              <input
+                type="file"
+                name="file"
+                id="file"
+                accept=".mp3,.wav,.flac,.aiff,.m4a"
+                required
+                aria-label="Upload an audio file"
+              />
+            </div>
+            <div class="form-group">
+              <label for="stem">Choose stem to isolate:</label>
+              <select name="stem" id="stem" aria-label="Select a stem to isolate">
+                <option value="vocals">Vocals</option>
+                <option value="drums">Drums</option>
+                <option value="bass">Bass</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <button type="submit" aria-label="Click to isolate the selected stem">
+              Isolate Stem
+            </button>
+          </form>
+        </section>
+
+        <div id="loader" class="hidden" aria-live="polite">
+          <p>⏳ Processing your file, please wait...</p>
+          <div class="spinner"></div>
+          <div id="statusMessage" class="status-message hidden"></div>
+        </div>
+
+        <section id="resultsCard" class="card hidden">
+          <div id="downloadLink" class="ready-message">
+            <h2>✅ Your file is ready</h2>
+          </div>
+          <div id="audioPlayer" aria-live="polite">
+            <h2 style="color:var(--primary-color)">🎧 Preview the Isolated Stem</h2>
+            <div class="audio-wrapper">
+              <audio id="audioPreview" controls></audio>
+            </div>
+            <div id="downloadButtonContainer">
+              <a id="downloadHref" href="#" download>⬇️ Download Isolated Stem</a>
+            </div>
+            <button id="tryAnother">🔄 Try Another</button>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <p>&copy; 2025 AI Stem Remover. All rights reserved.</p>
+        <small class="branding">Powered by Lucas Rocha Sounds</small>
+      </footer>
+    </div>
+  </body>
+</html>
