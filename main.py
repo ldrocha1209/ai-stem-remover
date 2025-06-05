@@ -58,6 +58,10 @@ middleware = [
 
 app = FastAPI(middleware=middleware)
 
+@app.get("/healthz")
+def healthz():
+    return {"status": "ok"}
+
 # ────────────────────────────────────────────────────────────────────────────────
 # Limit upload size (100 MB)
 # ────────────────────────────────────────────────────────────────────────────────
