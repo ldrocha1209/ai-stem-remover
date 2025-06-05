@@ -6,3 +6,4 @@ temp_uploads/
 uploads/
 outputs/
 .env
+.DS_Store
