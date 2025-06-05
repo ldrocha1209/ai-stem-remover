@@ -24,6 +24,11 @@ from models import Base, User
 from auth_utils import hash_password, verify_password
 from email_validator import validate_email, EmailNotValidError
 
+# At top of main.py, before routes:
+for folder in ["temp_uploads", "uploads", "outputs"]:
+    os.makedirs(folder, exist_ok=True)
+
+
 # ────────────────────────────────────────────────────────────────────────────────
 # Database setup
 # ────────────────────────────────────────────────────────────────────────────────
