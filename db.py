@@ -1,14 +1,13 @@
 # db.py
-
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-# We’ll store users.db in your project folder. 
-# In production you might pick a better path, but for now this works.
-DATABASE_URL = "sqlite:///./users.db"
+# 1) Read DATABASE_URL from environment (Render will set this automatically).
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
-)
+# 2) Create the engine pointed at Postgres.
+engine = create_engine(DATABASE_URL)
 
+# 3) Configure SessionLocal to use that engine.
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
