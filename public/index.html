@@ -27,6 +27,36 @@
     <link rel="stylesheet" href="/static/style.css?v=5" />
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon" />
     <script src="/static/script.js" defer></script>
+    <style>
+      /* ─────────────────────────────────────────────────────────────────────────────
+        Discord-style “Join” button CSS
+         ───────────────────────────────────────────────────────────────────────────── */
+      .discord-button {
+        display: inline-flex;
+        align-items: center;
+        background-color: #5865F2;
+        color: #FFFFFF;
+        font-family: var(--font-main);
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-decoration: none;
+        padding: 0.5rem 0.8rem;
+        border-radius: 4px;
+        transition: background-color 0.2s ease;
+        margin-left: 1rem;
+      }
+      .discord-button:hover {
+        background-color: #4752C4;
+      }
+      .discord-button svg {
+        width: 1rem;
+        height: 1rem;
+        margin-right: 0.5rem;
+        fill: #FFFFFF;
+      }
+      /* ───────────────────────────────────────────────────────────────────────────── */
+    </style>
+
   </head>
   <body>
     <noscript>
@@ -78,7 +108,7 @@
         </section>
 
         <div id="loader" class="hidden" aria-live="polite">
-          <p>⏳ Processing your file, please wait...</p>
+          <p>Processing your file, please wait...</p>
           <div class="spinner"></div>
           <div id="statusMessage" class="status-message hidden"></div>
         </div>
@@ -101,6 +131,15 @@
       </main>
 
       <footer>
+        <div style="text-align: center; margin-bottom: 0.5rem;">
+          <a href="https://discord.gg/VEd7HQjUyR"
+            target="_blank"
+            class="discord-button"
+            aria-label="Join our Discord">
+            <!-- Inline SVG… -->
+            Join our Discord
+          </a>
+        </div>
         <p>&copy; 2025 AI Stem Remover. All rights reserved.</p>
         <small class="branding">Powered by Lucas Rocha Sounds</small>
       </footer>
