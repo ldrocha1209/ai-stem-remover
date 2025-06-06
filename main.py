@@ -1,3 +1,5 @@
+# main.py
+
 import os
 import uuid
 import urllib.parse
@@ -7,7 +9,9 @@ from fastapi import (
     FastAPI, Request, Depends, Form, UploadFile, File,
     status, HTTPException
 )
-from fastapi.responses import HTMLResponse, StreamingResponse, RedirectResponse, JSONResponse
+from fastapi.responses import (
+    HTMLResponse, StreamingResponse, RedirectResponse, JSONResponse
+)
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -24,14 +28,15 @@ from models import Base, User
 from auth_utils import hash_password, verify_password
 from email_validator import validate_email, EmailNotValidError
 
-# At top of main.py, before routes:
+# ─────────────────────────────────────────────────────────────────────────────
+# Ensure these folders exist
+# ─────────────────────────────────────────────────────────────────────────────
 for folder in ["temp_uploads", "uploads", "outputs"]:
     os.makedirs(folder, exist_ok=True)
 
-
-# ────────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
 # Database setup
-# ────────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
 Base.metadata.create_all(bind=engine)
 
 def get_db():
@@ -41,9 +46,9 @@ def get_db():
     finally:
         db.close()
 
-# ────────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
 # Session middleware configuration
-# ────────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
 config = Config(".env")
 SESSION_SECRET_KEY = config("SESSION_SECRET_KEY", cast=str, default="supersecret")
 
@@ -62,9 +67,9 @@ app = FastAPI(middleware=middleware)
 def healthz():
     return {"status": "ok"}
 
-# ────────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
 # Limit upload size (100 MB)
-# ────────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
 class LimitUploadSizeMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         max_size = 100 * 1024 * 1024  # 100 MB
@@ -79,20 +84,21 @@ class LimitUploadSizeMiddleware(BaseHTTPMiddleware):
 app.mount("/static", StaticFiles(directory="public", html=True), name="static")
 app.add_middleware(LimitUploadSizeMiddleware)
 
-# ────────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
 # Load Demucs model once at startup
-# ────────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
 print("📦 Loading Demucs model...")
 demucs_model = get_model(name="htdemucs")
 print("✅ Demucs model loaded.")
 
-# ────────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
 # Signup routes
-# ────────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
 @app.get("/signup", response_class=HTMLResponse)
 def signup_form(request: Request):
     if request.session.get("user_id"):
         return RedirectResponse(url="/")
+
     return """
     <!doctype html>
     <html lang="en">
@@ -159,15 +165,32 @@ def signup_form(request: Request):
                 <form action="/signup" method="post">
                     <div class="form-group">
                         <label for="email">EMAIL ADDRESS</label>
-                        <input type="email" id="email" name="email" placeholder="you@example.com" required />
+                        <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="you@example.com"
+                        required
+                        />
                     </div>
                     <div class="form-group">
                         <label for="password">PASSWORD</label>
-                        <input type="password" id="password" name="password" placeholder="Choose a strong password" required />
+                        <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Choose a strong password"
+                        required
+                        />
                     </div>
                     <div class="form-group">
                         <label for="full_name">FULL NAME (OPTIONAL)</label>
-                        <input type="text" id="full_name" name="full_name" placeholder="Jane Doe" />
+                        <input
+                        type="text"
+                        id="full_name"
+                        name="full_name"
+                        placeholder="Jane Doe"
+                        />
                     </div>
                     <div class="checkbox-row">
                         <input type="checkbox" id="subscribe" name="subscribe" value="yes" />
@@ -176,7 +199,8 @@ def signup_form(request: Request):
                     <button type="submit">Sign Up</button>
                 </form>
                 <p style="margin-top: 1rem; color: var(--text-muted);">
-                    Already have an account? <a href="/login" style="color: var(--accent-color);">Log In</a>
+                    Already have an account?
+                    <a href="/login" style="color: var(--accent-color);">Log In</a>
                 </p>
             </section>
             <footer>
@@ -193,48 +217,69 @@ def signup_submit(
     email: str = Form(...),
     password: str = Form(...),
     full_name: str = Form(None),
-    subscribe: str = Form(None),
+    subscribe: str = Form(None),   # “yes” if checked, or None if unchecked
     db: Session = Depends(get_db)
 ):
+    # 1) Validate email format
     try:
         valid = validate_email(email)
         email = valid.email
     except EmailNotValidError:
-        return HTMLResponse("<h3>Invalid email. <a href='/signup'>Try again</a>.</h3>", status_code=400)
+        return HTMLResponse(
+            "<h3>Invalid email. <a href='/signup'>Try again</a>.</h3>",
+            status_code=400
+        )
 
+    # 2) Check if user already exists
     existing_user = db.query(User).filter(User.email == email).first()
     if existing_user:
-        return HTMLResponse("<h3>Email already registered. <a href='/login'>Log in</a>.</h3>", status_code=400)
+        return HTMLResponse(
+            "<h3>Email already registered. <a href='/login'>Log in</a>.</h3>",
+            status_code=400
+        )
 
+    # 3) Hash the password
     hashed_pw = hash_password(password)
+
+    # 4) Create + commit the new user
     new_user = User(email=email, hashed_password=hashed_pw, full_name=full_name)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
+    # 5) (Optional) Add to mailing list if “subscribe” checked
     if subscribe == "yes":
-        pass  # Add to mailing list if desired
+        pass  # call your email‐provider helper here
 
+    # 6) Log them in by saving user_id in session
     request.session["user_id"] = new_user.id
+
+    # 7) Redirect to homepage
     return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
 
-# ────────────────────────────────────────────────────────────────────────────────
-# Login routes
-# ────────────────────────────────────────────────────────────────────────────────
-@app.get("/login", response_class=HTMLResponse)
-def login_form(request: Request):
-    if request.session.get("user_id"):
-        return RedirectResponse(url="/")
-    return """
+# ─────────────────────────────────────────────────────────────────────────────
+# Login‐page helper: returns the full HTML for login (injects an error banner if needed)
+# ─────────────────────────────────────────────────────────────────────────────
+def render_login_page(error_message: str = None) -> str:
+    error_html = ""
+    if error_message:
+        error_html = f"""
+            <div class="error-banner">
+                {error_message}
+            </div>
+        """
+
+    return f"""
     <!doctype html>
     <html lang="en">
     <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <title>Log In – AI Stem Remover</title>
-        <link rel="stylesheet" href="/static/style.css?v=1">
-        <style>
-        input[type="email"], input[type="password"] {
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Log In – AI Stem Remover</title>
+    <link rel="stylesheet" href="/static/style.css?v=1">
+    <style>
+        /* Text inputs styling */
+        input[type="email"], input[type="password"] {{
             background-color: #1a1a1a;
             border: 1px solid var(--border-color);
             color: var(--text-color);
@@ -245,8 +290,10 @@ def login_form(request: Request):
             width: 100%;
             box-sizing: border-box;
             margin: 0.5rem 0 1rem;
-        }
-        input[type="checkbox"] {
+        }}
+
+        /* Custom checkbox base */
+        input[type="checkbox"] {{
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
@@ -258,11 +305,11 @@ def login_form(request: Request):
             border: 2px solid var(--primary-color);
             border-radius: 4px;
             position: relative;
-        }
-        input[type="checkbox"]:checked {
+        }}
+        input[type="checkbox"]:checked {{
             background-color: var(--primary-color);
-        }
-        input[type="checkbox"]:checked::after {
+        }}
+        input[type="checkbox"]:checked::after {{
             content: "";
             position: absolute;
             top: 50%;
@@ -272,49 +319,95 @@ def login_form(request: Request):
             border: solid var(--text-color);
             border-width: 0 2px 2px 0;
             transform: translate(-50%, -60%) rotate(45deg);
-        }
-        .checkbox-row {
+        }}
+        .checkbox-row {{
             display: flex;
             align-items: center;
             margin: 0.5rem 0 1rem;
-        }
-        </style>
+        }}
+
+        /* Error banner styling */
+        .error-banner {{
+            background-color: #ff4f4f;       /* red background */
+            color: #ffffff;                 /* white text */
+            padding: 0.75rem 1rem;          /* some padding */
+            border-radius: 8px;             /* rounded corners */
+            margin-bottom: 1rem;            /* space before the form */
+            font-weight: 600;               /* slightly bold */
+            text-align: center;             /* center‐aligned text */
+        }}
+    </style>
     </head>
     <body>
-        <div class="container">
-            <header>
-                <h1 class="gradient-header">🎵 AI Stem Remover</h1>
-                <p>Log in to access the AI Stem Remover.</p>
-            </header>
-            <section class="card">
-                <h2>Log In</h2>
-                <form action="/login" method="post">
-                    <div class="form-group">
-                        <label for="email">EMAIL ADDRESS</label>
-                        <input type="email" id="email" name="email" placeholder="you@example.com" required />
-                    </div>
-                    <div class="form-group">
-                        <label for="password">PASSWORD</label>
-                        <input type="password" id="password" name="password" placeholder="Enter your password" required />
-                    </div>
-                    <div class="checkbox-row">
-                        <input type="checkbox" id="remember_me" name="remember_me" value="yes" />
-                        <label for="remember_me">Keep me logged in</label>
-                    </div>
-                    <button type="submit">Log In</button>
-                </form>
-                <p style="margin-top: 1rem; color: var(--text-muted);">
-                    Don’t have an account? <a href="/signup" style="color: var(--accent-color);">Sign Up</a>
-                </p>
-            </section>
-            <footer>
-                <p>&copy; 2025 AI Stem Remover. All rights reserved.</p>
-            </footer>
-        </div>
+    <div class="container">
+        <header>
+        <h1 class="gradient-header">🎵 AI Stem Remover</h1>
+        <p>Log in to access the AI Stem Remover.</p>
+        </header>
+
+        <section class="card">
+        <h2>Log In</h2>
+        <!-- If there's an error, this block will appear above the form -->
+        {error_html}
+
+        <form action="/login" method="post">
+            <div class="form-group">
+            <label for="email">EMAIL ADDRESS</label>
+            <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="you@example.com"
+                required
+            />
+            </div>
+
+            <div class="form-group">
+            <label for="password">PASSWORD</label>
+            <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Enter your password"
+                required
+            />
+            </div>
+
+            <div class="checkbox-row">
+            <input type="checkbox" id="remember_me" name="remember_me" value="yes" />
+            <label for="remember_me">Keep me logged in</label>
+            </div>
+
+            <button type="submit">Log In</button>
+        </form>
+
+        <p style="margin-top: 1rem; color: var(--text-muted);">
+            Don’t have an account?
+            <a href="/signup" style="color: var(--accent-color);">Sign Up</a>
+        </p>
+        </section>
+
+        <footer>
+        <p>&copy; 2025 AI Stem Remover. All rights reserved.</p>
+        </footer>
+    </div>
     </body>
     </html>
     """
 
+# ─────────────────────────────────────────────────────────────────────────────
+# GET /login: show login form (no error by default)
+# ─────────────────────────────────────────────────────────────────────────────
+@app.get("/login", response_class=HTMLResponse)
+def login_form(request: Request):
+    if request.session.get("user_id"):
+        return RedirectResponse(url="/")
+    return HTMLResponse(render_login_page(None))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# POST /login: validate credentials; show error banner if invalid
+# ─────────────────────────────────────────────────────────────────────────────
 @app.post("/login")
 def login_submit(
     request: Request,
@@ -323,21 +416,35 @@ def login_submit(
     remember_me: str = Form(None),
     db: Session = Depends(get_db)
 ):
+    # 1) Find user by email
     user = db.query(User).filter(User.email == email).first()
-    if not user or not verify_password(password, user.hashed_password):
-        return HTMLResponse("<h3>Invalid credentials. <a href='/login'>Try again</a>.</h3>", status_code=400)
 
+    # 2) If missing or password fails, re‐render login with error banner
+    if not user or not verify_password(password, user.hashed_password):
+        return HTMLResponse(
+            render_login_page("Invalid email or password. Please try again."),
+            status_code=401
+        )
+
+    # 3) Valid login → save user_id in session
     request.session["user_id"] = user.id
+
+    # 4) Redirect to homepage
     return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Logout
+# ─────────────────────────────────────────────────────────────────────────────
 @app.get("/logout")
 def logout(request: Request):
     request.session.clear()
     return RedirectResponse(url="/login")
 
-# ────────────────────────────────────────────────────────────────────────────────
-# Current user dependency
-# ────────────────────────────────────────────────────────────────────────────────
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Dependency to get current user (or 401 if not authenticated)
+# ─────────────────────────────────────────────────────────────────────────────
 def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     user_id = request.session.get("user_id")
     if not user_id:
@@ -347,15 +454,17 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
         raise HTTPException(status_code=401, detail="Invalid user")
     return user
 
-# ────────────────────────────────────────────────────────────────────────────────
-# Homepage & isolate endpoints
-# ────────────────────────────────────────────────────────────────────────────────
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Homepage & isolate endpoints (protected)
+# ─────────────────────────────────────────────────────────────────────────────
 @app.get("/", response_class=HTMLResponse)
 def serve_homepage(request: Request):
     if not request.session.get("user_id"):
         return RedirectResponse(url="/login")
     with open("public/index.html", "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read(), media_type="text/html")
+
 
 @app.post("/isolate")
 async def isolate_endpoint(
